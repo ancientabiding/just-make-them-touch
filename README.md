@@ -1,8 +1,8 @@
 # Just make them touch (for Figma)
 
-A Figma plugin that adjusts the spacing between two vector paths so their actual paths touch, not just their bounding boxes.
+A Figma plugin that closes the distance between two paths so them touch, not just their bounding boxes.
 
-**[Plugin's page ↗︎](https://www.figma.com/community/)**
+**[Plugin's page ↗︎](https://www.figma.com/community/plugin/1568768697498818615)**
 
 When adjusting layers in Figma, the distance is calculated from their bounding boxes, not their actual shapes. This plugin bridges that gap by calculating the distance based on the vector paths themselves.
 
