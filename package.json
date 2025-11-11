@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "build:ts": "tsc",
+    "build:html": "rm -rf just-make-them-touch/ui.html && copyfiles ui.html just-make-them-touch",
+    "build": "bun run build:ts && bun run build:html"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "*",
+    "copyfiles": "^2.4.1",
+    "typescript": "^5.3.2"
+  }
+}

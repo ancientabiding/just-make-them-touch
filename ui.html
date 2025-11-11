@@ -1,0 +1,592 @@
+<!doctype html>
+
+<!--
+
+  PLUGIN UI
+
+                     -(}-
+                      (\_  ._~''
+           ,_  _,.--..( ,_.+  (`\
+     -~.__--=_/'(    ` ) /  (  `'   aa
+              ,_/ \ /'.__,. ).
+           `_/     `\_  ._/ ` \ ,
+                      `
+-->
+
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+                user-select: none;
+                -webkit-user-select: none;
+            }
+            body {
+                font-family: "Inter", sans-serif;
+                font-size: 11px;
+                color: white;
+                background: #2c2c2c;
+                overflow: hidden;
+            }
+            .plugin-ui {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                height: 100vh;
+            }
+            .main-frame {
+                display: flex;
+                align-items: center;
+                background: #2c2c2c;
+                width: 100%;
+            }
+            .frame-section {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 48px;
+                padding: 8px;
+            }
+            .orientation-selector {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #383838;
+                border-radius: 5px;
+            }
+            .orientation-selector.disabled {
+                pointer-events: none;
+                opacity: 0.5;
+            }
+            .orientation-button {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 46px;
+                height: 24px;
+                border-radius: 5px;
+                position: relative;
+                cursor: pointer;
+            }
+            .orientation-button.active {
+                background: #2c2c2c;
+            }
+            .orientation-button.active::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                border: 1px solid #444444;
+                border-radius: 5px;
+                pointer-events: none;
+            }
+            .orientation-button svg {
+                width: 24px;
+                height: 24px;
+                display: block;
+            }
+            .run-area {
+                display: flex;
+                align-items: flex-start;
+            }
+            .no-selection-message {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 32px;
+                padding: 0 12px;
+                border-radius: 5px;
+                width: 95px;
+            }
+            .no-selection-message p {
+                font-family: "Inter", sans-serif;
+                font-size: 11px;
+                font-weight: 450;
+                line-height: 14px;
+                color: rgba(255, 255, 255, 0.7);
+                white-space: normal;
+                text-align: center;
+                flex: 1;
+                min-width: 0;
+            }
+            .run-button {
+                display: none;
+                align-items: center;
+                justify-content: center;
+                width: 95px;
+                height: 32px;
+                padding: 0 12px;
+                border-radius: 5px;
+                background: #0c8ce9;
+                position: relative;
+                cursor: pointer;
+            }
+            .run-button.visible {
+                display: flex;
+            }
+            .run-button:active {
+                background: #0a6dc2;
+            }
+            .run-button:active::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                border: 1px solid #7cc4f8;
+                border-radius: 5px;
+                pointer-events: none;
+            }
+            .run-button p {
+                font-family: "Inter", sans-serif;
+                font-size: 11px;
+                font-weight: 450;
+                line-height: 16px;
+                color: white;
+                white-space: nowrap;
+            }
+            .no-selection-message.hidden {
+                display: none;
+            }
+            .divider-vertical {
+                width: 1px;
+                height: 100%;
+                background: #444444;
+                flex-shrink: 0;
+            }
+            .divider-horizontal {
+                width: 100%;
+                height: 1px;
+                background: #444444;
+                flex-shrink: 0;
+            }
+            .result-frame {
+                flex: 1;
+                min-width: 0;
+                height: 48px;
+                position: relative;
+            }
+            .result-container {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 48px;
+                padding: 0 16px;
+                gap: 8px;
+                width: 100%;
+            }
+            .result-area {
+                display: flex;
+                flex: 1;
+                min-width: 0;
+                height: 24px;
+                align-items: center;
+                background: #383838;
+                border-radius: 5px;
+                overflow: hidden;
+                position: relative;
+            }
+            .result-area::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                border: 1px solid #444444;
+                border-radius: 5px;
+                pointer-events: none;
+                opacity: 0;
+            }
+            .result-area:hover::before {
+                opacity: 1;
+            }
+            .result-area.no-selection,
+            .result-area.loading {
+                cursor: default;
+                user-select: none;
+            }
+            .result-area.no-selection:hover::before,
+            .result-area.loading:hover::before {
+                opacity: 0;
+            }
+            .result-area.no-selection *,
+            .result-area.loading * {
+                cursor: default;
+            }
+            .loading-icon {
+                width: 24px;
+                height: 24px;
+                flex-shrink: 0;
+                display: none;
+            }
+            .loading-icon.visible {
+                display: block;
+            }
+            .loading-icon svg {
+                width: 24px;
+                height: 24px;
+                display: block;
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+                from {
+                    transform: rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+            .result-icon {
+                width: 24px;
+                height: 24px;
+                flex-shrink: 0;
+                display: none;
+            }
+            .result-icon.visible {
+                display: block;
+            }
+            .result-icon svg {
+                width: 24px;
+                height: 24px;
+                display: block;
+            }
+            .result-value {
+                flex: 1;
+                min-width: 0;
+                font-family: "Inter", sans-serif;
+                font-size: 11px;
+                font-weight: 450;
+                line-height: 16px;
+                color: white;
+                opacity: 0;
+                user-select: text;
+                -webkit-user-select: text;
+                cursor: text;
+            }
+            .result-value.visible {
+                opacity: 1;
+            }
+            .copy-button {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 24px;
+                padding: 0 12px;
+                border-radius: 5px;
+                opacity: 0;
+                position: relative;
+                cursor: pointer;
+            }
+            .copy-button.visible {
+                opacity: 1;
+            }
+            .copy-button:hover p {
+                color: white;
+            }
+            .copy-button:active::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                border: 1px solid #7cc4f8;
+                border-radius: 5px;
+                pointer-events: none;
+            }
+            .copy-button:active p {
+                color: white;
+            }
+            .copy-button p {
+                font-family: "Inter", sans-serif;
+                font-size: 11px;
+                font-weight: 450;
+                line-height: 16px;
+                color: rgba(255, 255, 255, 0.7);
+                white-space: nowrap;
+            }
+            .message-frame {
+                display: flex;
+                align-items: center;
+                background: #2c2c2c;
+                height: 48px;
+                width: 100%;
+            }
+            .path-type-message {
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0 12px;
+            }
+            .path-type-message p {
+                font-family: "Inter", sans-serif;
+                font-size: 11px;
+                font-weight: 450;
+                line-height: 14px;
+                color: rgba(255, 255, 255, 0.4);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                flex: 1;
+                min-width: 0;
+                white-space: nowrap;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="plugin-ui">
+            <div class="main-frame">
+                <div class="frame-section">
+                    <div class="orientation-selector">
+                        <div
+                            class="orientation-button active"
+                            id="horizontal-btn"
+                        >
+                            <svg fill="none" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 17H11V6H12V17ZM9.70703 11.5L6.85352 14.3535L6.14648 13.6465L7.79297 12H4V11H7.79297L6.14648 9.35352L6.85352 8.64648L9.70703 11.5ZM16.8535 9.35352L15.207 11H19V12H15.207L16.8535 13.6465L16.1465 14.3535L13.293 11.5L16.1465 8.64648L16.8535 9.35352Z"
+                                    fill="white"
+                                />
+                            </svg>
+                        </div>
+                        <div class="orientation-button" id="vertical-btn">
+                            <svg fill="none" viewBox="0 0 24 24">
+                                <path
+                                    d="M14.8535 17.1465L14.1465 17.8535L12.5 16.207V20H11.5V16.207L9.85352 17.8535L9.14648 17.1465L12 14.293L14.8535 17.1465ZM18 13H6V12H18V13ZM12.5 8.79297L14.1465 7.14648L14.8535 7.85352L12 10.707L9.14648 7.85352L9.85352 7.14648L11.5 8.79297V5H12.5V8.79297Z"
+                                    fill="white"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="frame-section">
+                    <div class="run-area">
+                        <div
+                            class="no-selection-message"
+                            id="selection-message"
+                        >
+                            <p>Select 2 paths</p>
+                        </div>
+                        <div class="run-button" id="run-btn">
+                            <p>Make it touch</p>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; align-self: stretch">
+                    <div class="divider-vertical"></div>
+                </div>
+                <div class="result-frame">
+                    <div class="result-container">
+                        <div class="result-area no-selection">
+                            <div class="loading-icon" id="loading-icon">
+                                <svg fill="none" viewBox="0 0 24 24">
+                                    <path
+                                        d="M12 6C12.2761 6 12.5 6.22386 12.5 6.5C12.5 6.77614 12.2761 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C14.7614 17 17 14.7614 17 12C17 11.7239 17.2239 11.5 17.5 11.5C17.7761 11.5 18 11.7239 18 12C18 15.3137 15.3137 18 12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6Z"
+                                        fill="white"
+                                    />
+                                </svg>
+                            </div>
+                            <div
+                                class="result-icon visible"
+                                id="horizontal-icon"
+                            >
+                                <svg fill="none" viewBox="0 0 24 24">
+                                    <path
+                                        clip-rule="evenodd"
+                                        d="M11.5 6C11.6326 6 11.7598 6.05268 11.8536 6.14645C11.9473 6.24021 12 6.36739 12 6.5V17.5C12 17.6326 11.9473 17.7598 11.8536 17.8536C11.7598 17.9473 11.6326 18 11.5 18C11.3674 18 11.2402 17.9473 11.1464 17.8536C11.0527 17.7598 11 17.6326 11 17.5V6.5C11 6.36739 11.0527 6.24021 11.1464 6.14645C11.2402 6.05268 11.3674 6 11.5 6ZM9 8C9.26522 8 9.51957 8.10536 9.70711 8.29289C9.89464 8.48043 10 8.73478 10 9V15C10 15.2652 9.89464 15.5196 9.70711 15.7071C9.51957 15.8946 9.26522 16 9 16H7C6.73478 16 6.48043 15.8946 6.29289 15.7071C6.10536 15.5196 6 15.2652 6 15V9C6 8.73478 6.10536 8.48043 6.29289 8.29289C6.48043 8.10536 6.73478 8 7 8H9ZM9 10V9H7V15H9V10ZM17 9C17 8.73478 16.8946 8.48043 16.7071 8.29289C16.5196 8.10536 16.2652 8 16 8H14C13.7348 8 13.4804 8.10536 13.2929 8.29289C13.1054 8.48043 13 8.73478 13 9V15C13 15.2652 13.1054 15.5196 13.2929 15.7071C13.4804 15.8946 13.7348 16 14 16H16C16.2652 16 16.5196 15.8946 16.7071 15.7071C16.8946 15.5196 17 15.2652 17 15V9ZM16 9V15H14V9H16Z"
+                                        fill="white"
+                                        fill-rule="evenodd"
+                                    />
+                                </svg>
+                            </div>
+                            <div class="result-icon" id="vertical-icon">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path
+                                        fill-rule="evenodd"
+                                        clip-rule="evenodd"
+                                        d="M16 9C16 9.26522 15.8946 9.51957 15.7071 9.70711C15.5196 9.89464 15.2652 10 15 10H9C8.73478 10 8.48043 9.89464 8.29289 9.70711C8.10536 9.51957 8 9.26522 8 9V7C8 6.73478 8.10536 6.48043 8.29289 6.29289C8.48043 6.10536 8.73478 6 9 6H15C15.2652 6 15.5196 6.10536 15.7071 6.29289C15.8946 6.48043 16 6.73478 16 7V9ZM14 9H15V7H9V9H14ZM18 12C18 12.1326 17.9473 12.2598 17.8536 12.3536C17.7598 12.4473 17.6326 12.5 17.5 12.5H6.5C6.36739 12.5 6.24021 12.4473 6.14645 12.3536C6.05268 12.2598 6 12.1326 6 12C6 11.8674 6.05268 11.7402 6.14645 11.6464C6.24021 11.5527 6.36739 11.5 6.5 11.5H17.5C17.6326 11.5 17.7598 11.5527 17.8536 11.6464C17.9473 11.7402 18 11.8674 18 12ZM15 18C15.2652 18 15.5196 17.8946 15.7071 17.7071C15.8946 17.5196 16 17.2652 16 17V15C16 14.7348 15.8946 14.4804 15.7071 14.2929C15.5196 14.1054 15.2652 14 15 14H9C8.73478 14 8.48043 14.1054 8.29289 14.2929C8.10536 14.4804 8 14.7348 8 15V17C8 17.2652 8.10536 17.5196 8.29289 17.7071C8.48043 17.8946 8.73478 18 9 18H15ZM15 17H9V15H15V17Z"
+                                        fill="white"
+                                    />
+                                </svg>
+                            </div>
+                            <p class="result-value" id="result-value">0</p>
+                            <div class="copy-button" id="copy-btn">
+                                <p>Copy</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="divider-horizontal"></div>
+            <div class="message-frame">
+                <div class="path-type-message">
+                    <p>Curved segments are not supported at this time.</p>
+                </div>
+            </div>
+        </div>
+        <script>
+            const state = {
+                orientation: "horizontal",
+                hasSelection: false,
+                resultValue: "0",
+                isLoading: false,
+            };
+
+            const dom = {
+                horizontalBtn: document.getElementById("horizontal-btn"),
+                verticalBtn: document.getElementById("vertical-btn"),
+                selectionMessage: document.getElementById("selection-message"),
+                runBtn: document.getElementById("run-btn"),
+                loadingIcon: document.getElementById("loading-icon"),
+                horizontalIcon: document.getElementById("horizontal-icon"),
+                verticalIcon: document.getElementById("vertical-icon"),
+                resultValue: document.getElementById("result-value"),
+                copyBtn: document.getElementById("copy-btn"),
+                resultArea: document.querySelector(".result-area"),
+                orientationSelector: document.querySelector(
+                    ".orientation-selector",
+                ),
+            };
+
+            function setOrientation(orientation) {
+                if (state.isLoading) return;
+                state.orientation = orientation;
+                dom.horizontalBtn.classList.toggle(
+                    "active",
+                    orientation === "horizontal",
+                );
+                dom.verticalBtn.classList.toggle(
+                    "active",
+                    orientation === "vertical",
+                );
+                parent.postMessage(
+                    {
+                        pluginMessage: {
+                            type: "orientation-changed",
+                            orientation,
+                        },
+                    },
+                    "*",
+                );
+            }
+
+            function updateUI(
+                hasSelection,
+                value = "0",
+                orientation = "horizontal",
+            ) {
+                state.hasSelection = hasSelection;
+                state.resultValue = value;
+                state.isLoading = false;
+
+                dom.selectionMessage.classList.toggle("hidden", hasSelection);
+                dom.runBtn.classList.toggle("visible", hasSelection);
+
+                dom.loadingIcon.classList.remove("visible");
+                dom.horizontalIcon.classList.toggle(
+                    "visible",
+                    orientation === "horizontal",
+                );
+                dom.verticalIcon.classList.toggle(
+                    "visible",
+                    orientation === "vertical",
+                );
+
+                dom.resultValue.textContent = value;
+                dom.resultValue.classList.toggle("visible", hasSelection);
+                dom.copyBtn.classList.toggle("visible", hasSelection);
+
+                dom.resultArea.classList.toggle("no-selection", !hasSelection);
+                dom.resultArea.classList.remove("loading");
+                dom.orientationSelector.classList.remove("disabled");
+
+                if (!hasSelection) {
+                    setOrientation("horizontal");
+                }
+            }
+
+            dom.horizontalBtn.addEventListener("click", () =>
+                setOrientation("horizontal"),
+            );
+            dom.verticalBtn.addEventListener("click", () =>
+                setOrientation("vertical"),
+            );
+
+            dom.runBtn.addEventListener("click", () => {
+                state.isLoading = true;
+                dom.loadingIcon.classList.add("visible");
+                dom.horizontalIcon.classList.remove("visible");
+                dom.verticalIcon.classList.remove("visible");
+                dom.resultValue.classList.remove("visible");
+                dom.copyBtn.classList.remove("visible");
+                dom.resultArea.classList.add("loading");
+                dom.orientationSelector.classList.add("disabled");
+                parent.postMessage(
+                    { pluginMessage: { type: "run-calculation" } },
+                    "*",
+                );
+            });
+
+            dom.copyBtn.addEventListener("click", () => {
+                const helper = document.createElement("textarea");
+                helper.style.position = "fixed";
+                helper.style.left = "-9999px";
+                document.body.appendChild(helper);
+                helper.value = state.resultValue.toString();
+                helper.select();
+                try {
+                    if (document.execCommand("copy")) {
+                        parent.postMessage(
+                            {
+                                pluginMessage: {
+                                    type: "copy-value",
+                                    value: state.resultValue,
+                                },
+                            },
+                            "*",
+                        );
+                        const p = dom.copyBtn.querySelector("p");
+                        const originalText = p.textContent;
+                        p.textContent = "Copied!";
+                        setTimeout(() => {
+                            p.textContent = originalText;
+                        }, 1000);
+                    }
+                } catch (err) {
+                    console.error("Copy failed", err);
+                    parent.postMessage(
+                        {
+                            pluginMessage: {
+                                type: "notify",
+                                message: "Could not copy value.",
+                            },
+                        },
+                        "*",
+                    );
+                } finally {
+                    document.body.removeChild(helper);
+                }
+            });
+
+            window.onmessage = (event) => {
+                const msg = event.data.pluginMessage;
+                if (!msg) return;
+
+                switch (msg.type) {
+                    case "selection-changed":
+                        if (msg.orientation) {
+                            setOrientation(msg.orientation);
+                        }
+                        updateUI(
+                            msg.hasSelection,
+                            msg.value,
+                            msg.orientation || "horizontal",
+                        );
+                        break;
+                    case "result-calculated":
+                        updateUI(true, msg.value, state.orientation);
+                        break;
+                }
+            };
+
+            parent.postMessage({ pluginMessage: { type: "ui-ready" } }, "*");
+        </script>
+    </body>
+</html>
