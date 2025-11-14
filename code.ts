@@ -164,14 +164,10 @@ function detectOrientation(
     return null;
   }
 
-  // Teste de sobreposição de projeções:
-  // Se tivessem altura infinita, se sobreporiam no eixo X?
   const overlapX = !(
     boundsA.x + boundsA.width <= boundsB.x ||
     boundsB.x + boundsB.width <= boundsA.x
   );
-
-  // Se tivessem largura infinita, se sobreporiam no eixo Y?
   const overlapY = !(
     boundsA.y + boundsA.height <= boundsB.y ||
     boundsB.y + boundsB.height <= boundsA.y
@@ -180,17 +176,12 @@ function detectOrientation(
   let orientation: "horizontal" | "vertical" | null;
 
   if (!overlapX && !overlapY) {
-    // Diagonal - nenhum movimento em X ou Y os faria se tocar
     orientation = null;
   } else if (overlapX && overlapY) {
-    // Já estão se sobrepondo/tocando
     orientation = null;
   } else if (overlapX && !overlapY) {
-    // Estão um sobre o outro (se sobrepõem no X, mas não no Y)
     orientation = "vertical";
   } else {
-    // !overlapX && overlapY
-    // Estão lado a lado (se sobrepõem no Y, mas não no X)
     orientation = "horizontal";
   }
 
@@ -279,7 +270,34 @@ function calculatePreciseHorizontalDistance(
   const rightmostPoint = findRightmostPoint(leftNode);
   if (!rightmostPoint) return null;
 
-  const intersectionX = findLeftmostXAtY(rightNode, rightmostPoint.y);
+  // Tentar encontrar interseção na altura exata
+  let intersectionX = findLeftmostXAtY(rightNode, rightmostPoint.y);
+
+  // Se não encontrou (micropixels de diferença), buscar no início do rightNode
+  if (intersectionX === Infinity) {
+    const rightBounds = rightNode.absoluteBoundingBox;
+    if (!rightBounds) return null;
+
+    // Determinar onde buscar baseado na posição relativa
+    let searchY: number;
+    if (rightmostPoint.y < rightBounds.y) {
+      // Ponto está acima do rightNode, buscar no topo
+      searchY = rightBounds.y;
+    } else if (rightmostPoint.y > rightBounds.y + rightBounds.height) {
+      // Ponto está abaixo do rightNode, buscar na base
+      searchY = rightBounds.y + rightBounds.height;
+    } else {
+      // Ponto está dentro do range, tentar pequena tolerância
+      searchY = rightmostPoint.y + 0.5;
+      intersectionX = findLeftmostXAtY(rightNode, searchY);
+      if (intersectionX === Infinity) {
+        searchY = rightmostPoint.y - 0.5;
+      }
+    }
+
+    intersectionX = findLeftmostXAtY(rightNode, searchY);
+  }
+
   if (intersectionX === Infinity) return null;
 
   const distance = rightmostPoint.x - intersectionX;
@@ -293,7 +311,28 @@ function calculateInverseHorizontalDistance(
   const leftmostPoint = findLeftmostPoint(rightNode);
   if (!leftmostPoint) return null;
 
-  const intersectionX = findRightmostXAtY(leftNode, leftmostPoint.y);
+  let intersectionX = findRightmostXAtY(leftNode, leftmostPoint.y);
+
+  if (intersectionX === -Infinity) {
+    const leftBounds = leftNode.absoluteBoundingBox;
+    if (!leftBounds) return null;
+
+    let searchY: number;
+    if (leftmostPoint.y < leftBounds.y) {
+      searchY = leftBounds.y;
+    } else if (leftmostPoint.y > leftBounds.y + leftBounds.height) {
+      searchY = leftBounds.y + leftBounds.height;
+    } else {
+      searchY = leftmostPoint.y + 0.5;
+      intersectionX = findRightmostXAtY(leftNode, searchY);
+      if (intersectionX === -Infinity) {
+        searchY = leftmostPoint.y - 0.5;
+      }
+    }
+
+    intersectionX = findRightmostXAtY(leftNode, searchY);
+  }
+
   if (intersectionX === -Infinity) return null;
 
   const distance = leftmostPoint.x - intersectionX;
@@ -346,7 +385,28 @@ function calculatePreciseVerticalDistance(
   const bottommostPoint = findBottommostPoint(topNode);
   if (!bottommostPoint) return null;
 
-  const intersectionY = findTopmostYAtX(bottomNode, bottommostPoint.x);
+  let intersectionY = findTopmostYAtX(bottomNode, bottommostPoint.x);
+
+  if (intersectionY === Infinity) {
+    const bottomBounds = bottomNode.absoluteBoundingBox;
+    if (!bottomBounds) return null;
+
+    let searchX: number;
+    if (bottommostPoint.x < bottomBounds.x) {
+      searchX = bottomBounds.x;
+    } else if (bottommostPoint.x > bottomBounds.x + bottomBounds.width) {
+      searchX = bottomBounds.x + bottomBounds.width;
+    } else {
+      searchX = bottommostPoint.x + 0.5;
+      intersectionY = findTopmostYAtX(bottomNode, searchX);
+      if (intersectionY === Infinity) {
+        searchX = bottommostPoint.x - 0.5;
+      }
+    }
+
+    intersectionY = findTopmostYAtX(bottomNode, searchX);
+  }
+
   if (intersectionY === Infinity) return null;
 
   const distance = bottommostPoint.y - intersectionY;
@@ -360,7 +420,28 @@ function calculateInverseVerticalDistance(
   const topmostPoint = findTopmostPoint(bottomNode);
   if (!topmostPoint) return null;
 
-  const intersectionY = findBottommostYAtX(topNode, topmostPoint.x);
+  let intersectionY = findBottommostYAtX(topNode, topmostPoint.x);
+
+  if (intersectionY === -Infinity) {
+    const topBounds = topNode.absoluteBoundingBox;
+    if (!topBounds) return null;
+
+    let searchX: number;
+    if (topmostPoint.x < topBounds.x) {
+      searchX = topBounds.x;
+    } else if (topmostPoint.x > topBounds.x + topBounds.width) {
+      searchX = topBounds.x + topBounds.width;
+    } else {
+      searchX = topmostPoint.x + 0.5;
+      intersectionY = findBottommostYAtX(topNode, searchX);
+      if (intersectionY === -Infinity) {
+        searchX = topmostPoint.x - 0.5;
+      }
+    }
+
+    intersectionY = findBottommostYAtX(topNode, searchX);
+  }
+
   if (intersectionY === -Infinity) return null;
 
   const distance = topmostPoint.y - intersectionY;
